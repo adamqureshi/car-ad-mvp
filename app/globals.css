@@ -157,6 +157,26 @@ textarea { resize: vertical; min-height: 96px; }
 
 /* Ensure content isn't covered by the floating pencil */
 .container { padding-bottom: 96px; }
-.fab-green { z-index: 50; }
+.fab-green { z-index: 50; } 
+/* Breadcrumbs */
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.bc-sep { color: var(--muted); }
+
+/* Link that triggers an action (e.g., Decode VIN) */
+.link-action {
+  display: inline-block;
+  color: var(--link);
+  text-decoration: underline;
+  font-weight: 600;
+  padding: 6px 0;
+}
+.link-action:focus-visible { box-shadow: 0 0 0 3px rgba(37,99,235,.24); outline: none; }
+
 
 
