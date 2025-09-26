@@ -1,5 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
+import FabCreate from "./FabCreate";
 
 export const metadata: Metadata = {
   title: "Car Ad — Minimal",
@@ -14,6 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
           <div className="small" style={{marginTop: 24}}>Minimal UI: gray background, blue links.</div>
         </div>
+        <FabCreate />
       </body>
     </html>
   );
