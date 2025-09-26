@@ -2,48 +2,43 @@
 import { useRef, useState } from "react";
 import { encodePayload } from "@/lib/codec";
 
+const fmt = new Intl.NumberFormat("en-US");
+const onlyDigits = (s: string) => s.replace(/[^\d]/g, "");
+
 export default function Page() {
   const [creating, setCreating] = useState(false);
   const [decoding, setDecoding] = useState(false);
+  const [zipLoading, setZipLoading] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const vinDebounce = useRef<any>(null); // debounce timer
+  const vinDebounce = useRef<any>(null);
+  const zipDebounce = useRef<any>(null);
 
-  // Helper: get input/textarea by name (form is mostly uncontrolled)
   const getInput = (name: string) =>
     formRef.current?.elements.namedItem(name) as
       | HTMLInputElement
       | HTMLTextAreaElement
       | null;
 
-  // Schedules a decode when VIN is 17 chars (debounced)
+  /** VIN auto-decode (debounced on type, also runs onBlur or button) */
   function scheduleDecodeIfReady() {
     const vinEl = getInput("vin") as HTMLInputElement | null;
     if (!vinEl) return;
-
-    // Normalize to uppercase as user types
     const raw = vinEl.value || "";
     const upper = raw.toUpperCase();
     if (raw !== upper) {
       const pos = vinEl.selectionStart || upper.length;
       vinEl.value = upper;
-      // keep cursor position
-      requestAnimationFrame(() => {
-        vinEl.setSelectionRange(pos, pos);
-      });
+      requestAnimationFrame(() => vinEl.setSelectionRange(pos, pos));
     }
-
     if (upper.length !== 17 || decoding) {
       if (vinDebounce.current) clearTimeout(vinDebounce.current);
       return;
     }
     if (vinDebounce.current) clearTimeout(vinDebounce.current);
-    vinDebounce.current = setTimeout(() => {
-      decodeVinNow();
-    }, 300);
+    vinDebounce.current = setTimeout(() => decodeVinNow(), 300);
   }
 
-  // Decode VIN via NHTSA VPIC and ALWAYS write fields
   async function decodeVinNow() {
     const vinEl = getInput("vin") as HTMLInputElement | null;
     if (!vinEl) return;
@@ -59,21 +54,10 @@ export default function Page() {
       );
       const data = await res.json();
       const row = data?.Results?.[0] || {};
-
-      const year = row.ModelYear || "";
-      const make = row.Make || "";
-      const model = row.Model || "";
-      const trim = row.Trim || row.Series || "";
-
-      const setValue = (name: string, value: string) => {
-        const el = getInput(name) as HTMLInputElement | null;
-        if (el) el.value = value || "";
-      };
-
-      setValue("year", String(year));
-      setValue("make", String(make));
-      setValue("model", String(model));
-      setValue("trim", String(trim));
+      setValue("year", String(row.ModelYear || ""));
+      setValue("make", String(row.Make || ""));
+      setValue("model", String(row.Model || ""));
+      setValue("trim", String(row.Trim || row.Series || ""));
     } catch {
       alert("VIN decode failed. You can still continue manually.");
     } finally {
@@ -81,34 +65,78 @@ export default function Page() {
     }
   }
 
+  /** ZIP → City/State (US) */
+  function scheduleZipLookup() {
+    const zipEl = getInput("zip") as HTMLInputElement | null;
+    if (!zipEl) return;
+    const digits = onlyDigits(zipEl.value).slice(0, 5);
+    if (zipEl.value !== digits) zipEl.value = digits;
+    if (digits.length !== 5) {
+      if (zipDebounce.current) clearTimeout(zipDebounce.current);
+      return;
+    }
+    if (zipDebounce.current) clearTimeout(zipDebounce.current);
+    zipDebounce.current = setTimeout(() => lookupZipNow(digits), 300);
+  }
+
+  async function lookupZipNow(zip: string) {
+    setZipLoading(true);
+    try {
+      const res = await fetch(`https://api.zippopotam.us/us/${zip}`);
+      if (!res.ok) throw new Error("zip");
+      const data = await res.json();
+      const place = data?.places?.[0];
+      if (place) {
+        setValue("city", String(place["place name"] || ""));
+        setValue("state", String(place["state abbreviation"] || ""));
+      }
+    } catch {
+      // silent; user can fill manually
+    } finally {
+      setZipLoading(false);
+    }
+  }
+
+  /** Price/Odometer formatting on input */
+  function formatNumberInput(name: "price" | "miles") {
+    const el = getInput(name) as HTMLInputElement | null;
+    if (!el) return;
+    const rawDigits = onlyDigits(el.value);
+    el.value = rawDigits ? fmt.format(Number(rawDigits)) : "";
+  }
+
+  const setValue = (name: string, value: string) => {
+    const el = getInput(name) as HTMLInputElement | null;
+    if (el) el.value = value || "";
+  };
+
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
+
     const payload = {
-      vin: String(form.get("vin") || "").trim(),
-      price: String(form.get("price") || "").trim(),
+      vin: String(form.get("vin") || "").trim().toUpperCase(),
+      price: String(form.get("price") || "").trim(),         // may have commas
       titleStatus: (form.get("titleStatus") as any) || "paid",
       year: String(form.get("year") || "").trim(),
       make: String(form.get("make") || "").trim(),
       model: String(form.get("model") || "").trim(),
       trim: String(form.get("trim") || "").trim(),
-      miles: String(form.get("miles") || "").trim(),
+      miles: String(form.get("miles") || "").trim(),         // may have commas
       city: String(form.get("city") || "").trim(),
       state: String(form.get("state") || "").trim(),
+      zip: String(form.get("zip") || "").trim(),
+      photoUrl: String(form.get("photoUrl") || "").trim(),
       sellerName: String(form.get("sellerName") || "").trim(),
       sellerEmail: String(form.get("sellerEmail") || "").trim(),
       sellerPhone: String(form.get("sellerPhone") || "").trim(),
       notes: String(form.get("notes") || "").trim(),
     };
 
-    // normalize + validate VIN
-    payload.vin = payload.vin.toUpperCase();
     if (payload.vin.length !== 17) {
       alert("VIN must be 17 characters.");
       return;
     }
-
-    // required phone
     if (!payload.sellerPhone) {
       alert("Seller mobile is required.");
       return;
@@ -154,22 +182,31 @@ export default function Page() {
           </label>
 
           <label className="small">
-            Exit price ($)
-            <input className="input" name="price" placeholder="e.g., 31,500" />
+            Photo URL
+            <input className="input" name="photoUrl" placeholder="https://…" />
           </label>
         </div>
 
         <div className="row2">
           <label className="small">
-            Title status
-            <select className="select" name="titleStatus">
-              <option value="paid">Paid off (title in hand)</option>
-              <option value="lien">Lien / loan payoff needed</option>
-            </select>
+            Asking price ($)
+            <input
+              className="input"
+              name="price"
+              placeholder="e.g., 31,500"
+              inputMode="numeric"
+              onInput={() => formatNumberInput("price")}
+            />
           </label>
           <label className="small">
-            Miles
-            <input className="input" name="miles" placeholder="e.g., 42,300" />
+            Odometer (miles)
+            <input
+              className="input"
+              name="miles"
+              placeholder="e.g., 42,300"
+              inputMode="numeric"
+              onInput={() => formatNumberInput("miles")}
+            />
           </label>
         </div>
 
@@ -197,13 +234,28 @@ export default function Page() {
 
         <div className="row2">
           <label className="small">
-            City
-            <input className="input" name="city" placeholder="e.g., Bellport" />
+            ZIP
+            <input
+              className="input"
+              name="zip"
+              placeholder="e.g., 11713"
+              inputMode="numeric"
+              maxLength={5}
+              onInput={scheduleZipLookup}
+              onBlur={scheduleZipLookup}
+            />
+            {zipLoading && <div className="small">Looking up city/state…</div>}
           </label>
-          <label className="small">
-            State
-            <input className="input" name="state" placeholder="NY" />
-          </label>
+          <div className="row2">
+            <label className="small">
+              City
+              <input className="input" name="city" placeholder="City" />
+            </label>
+            <label className="small">
+              State
+              <input className="input" name="state" placeholder="NY" />
+            </label>
+          </div>
         </div>
 
         <div className="row2">
@@ -234,7 +286,7 @@ export default function Page() {
           <textarea className="input" name="notes" placeholder="Any quick details buyers should know" rows={3} />
         </label>
 
-        <button className="button" type="submit" disabled={creating || decoding}>
+        <button className="button" type="submit" disabled={creating || decoding || zipLoading}>
           {creating ? "Creating…" : "Create Link"}
         </button>
       </form>
@@ -269,9 +321,7 @@ export default function Page() {
                 if (navigator.share) {
                   try {
                     await navigator.share({ title: "My Car Ad", url });
-                  } catch {
-                    /* user canceled share */
-                  }
+                  } catch {}
                 } else {
                   await navigator.clipboard.writeText(url);
                   alert("Link copied");
@@ -290,6 +340,7 @@ export default function Page() {
     </div>
   );
 }
+
 
 
 
