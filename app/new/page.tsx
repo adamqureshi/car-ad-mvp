@@ -24,7 +24,7 @@ export default function NewAd() {
 
   useEffect(() => {
     const raw = localStorage.getItem("carad.mobile") || "";
-    setAccountMobile(raw); // store raw digits; we format in the input
+    setAccountMobile(raw); // raw digits; we format only for display
   }, []);
 
   const getInput = (name: string) =>
@@ -48,11 +48,13 @@ export default function NewAd() {
     if (vinDebounce.current) clearTimeout(vinDebounce.current);
     vinDebounce.current = setTimeout(() => decodeVinNow(), 300);
   }
+
   async function decodeVinNow() {
     const vinEl = getInput("vin") as HTMLInputElement | null;
     if (!vinEl) return;
     const vin = (vinEl.value || "").trim().toUpperCase();
     if (vin.length !== 17 || decoding) return;
+
     setDecoding(true);
     try {
       const res = await fetch(
@@ -84,6 +86,7 @@ export default function NewAd() {
     if (zipDebounce.current) clearTimeout(zipDebounce.current);
     zipDebounce.current = setTimeout(() => lookupZipNow(digits), 300);
   }
+
   async function lookupZipNow(zip: string) {
     setZipLoading(true);
     try {
@@ -121,14 +124,13 @@ export default function NewAd() {
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
-
     const sellerPhoneDigits = onlyDigits(String(form.get("sellerPhone") || ""));
 
     const payload = {
       vin: String(form.get("vin") || "").trim().toUpperCase(),
       photoUrl: String(form.get("photoUrl") || "").trim(),
-      price: String(form.get("price") || "").trim(),   // may contain commas
-      miles: String(form.get("miles") || "").trim(),   // may contain commas
+      price: String(form.get("price") || "").trim(),
+      miles: String(form.get("miles") || "").trim(),
       titleStatus: (form.get("titleStatus") as any) || "paid",
       year: String(form.get("year") || "").trim(),
       make: String(form.get("make") || "").trim(),
@@ -169,37 +171,38 @@ export default function NewAd() {
       <p className="p">Fill this out, get a link, share anywhere.</p>
 
       <form className="row" onSubmit={onSubmit} ref={formRef}>
-        <div className="row2">
-          <label className="small">VIN
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8 }}>
-              <input
-                className="input"
-                name="vin"
-                placeholder="17-digit VIN"
-                required
-                maxLength={17}
-                onChange={scheduleDecodeIfReady}
-                onBlur={decodeVinNow}
-              />
-              <button
-                type="button"
-                className="button"
-                onClick={decodeVinNow}
-                disabled={decoding}
-                style={{ whiteSpace: "nowrap" }}
-              >
-                {decoding ? "Decoding…" : "Decode VIN"}
-              </button>
-            </div>
-          </label>
+        {/* VIN: input then button UNDER it (full width) */}
+        <label className="small">
+          VIN
+          <input
+            className="input"
+            name="vin"
+            placeholder="17-digit VIN"
+            required
+            maxLength={17}
+            onChange={scheduleDecodeIfReady}
+            onBlur={decodeVinNow}
+          />
+        </label>
+        <button
+          type="button"
+          className="button"
+          onClick={decodeVinNow}
+          disabled={decoding}
+          style={{ width: "100%" }}
+          aria-label="Decode VIN"
+        >
+          {decoding ? "Decoding…" : "Decode VIN"}
+        </button>
 
-          <label className="small">Photo URL
-            <input className="input" name="photoUrl" placeholder="https://…" />
-          </label>
-        </div>
+        <label className="small">
+          Photo URL
+          <input className="input" name="photoUrl" placeholder="https://…" />
+        </label>
 
         <div className="row2">
-          <label className="small">Asking price ($)
+          <label className="small">
+            Asking price ($)
             <input
               className="input"
               name="price"
@@ -208,7 +211,8 @@ export default function NewAd() {
               onInput={() => formatNumberInput("price")}
             />
           </label>
-          <label className="small">Odometer (miles)
+          <label className="small">
+            Odometer (miles)
             <input
               className="input"
               name="miles"
@@ -220,25 +224,30 @@ export default function NewAd() {
         </div>
 
         <div className="row2">
-          <label className="small">Year
+          <label className="small">
+            Year
             <input className="input" name="year" placeholder="e.g., 2022" />
           </label>
-          <label className="small">Make
+          <label className="small">
+            Make
             <input className="input" name="make" placeholder="e.g., Tesla" />
           </label>
         </div>
 
         <div className="row2">
-          <label className="small">Model
+          <label className="small">
+            Model
             <input className="input" name="model" placeholder="e.g., Model Y" />
           </label>
-          <label className="small">Trim
+          <label className="small">
+            Trim
             <input className="input" name="trim" placeholder="e.g., Long Range" />
           </label>
         </div>
 
         <div className="row2">
-          <label className="small">ZIP
+          <label className="small">
+            ZIP
             <input
               className="input"
               name="zip"
@@ -251,25 +260,30 @@ export default function NewAd() {
             {zipLoading && <div className="small">Looking up city/state…</div>}
           </label>
           <div className="row2">
-            <label className="small">City
+            <label className="small">
+              City
               <input className="input" name="city" placeholder="City" />
             </label>
-            <label className="small">State
+            <label className="small">
+              State
               <input className="input" name="state" placeholder="NY" />
             </label>
           </div>
         </div>
 
         <div className="row2">
-          <label className="small">Seller name
+          <label className="small">
+            Seller name
             <input className="input" name="sellerName" placeholder="Your name" />
           </label>
-          <label className="small">Seller email
+          <label className="small">
+            Seller email
             <input className="input" name="sellerEmail" placeholder="you@example.com" />
           </label>
         </div>
 
-        <label className="small">Seller mobile (required)
+        <label className="small">
+          Seller mobile (required)
           <input
             className="input"
             name="sellerPhone"
@@ -282,7 +296,8 @@ export default function NewAd() {
           />
         </label>
 
-        <label className="small">Notes (optional)
+        <label className="small">
+          Notes (optional)
           <textarea className="input" name="notes" placeholder="Any quick details buyers should know" rows={3} />
         </label>
 
@@ -294,20 +309,28 @@ export default function NewAd() {
       {url && (
         <div style={{ marginTop: 16 }}>
           <div className="h2">Your shareable link</div>
-          <a className="link" href={url} target="_blank" rel="noreferrer">{url}</a>
+          <a className="link" href={url} target="_blank" rel="noreferrer">
+            {url}
+          </a>
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
             <button
               className="button"
               type="button"
-              onClick={async () => { await navigator.clipboard.writeText(url); alert("Link copied"); }}
+              onClick={async () => {
+                await navigator.clipboard.writeText(url);
+                alert("Link copied");
+              }}
             >
               Copy link
             </button>
-            <a className="button" href="/" >Done</a>
+            <a className="button" href="/">
+              Done
+            </a>
           </div>
         </div>
       )}
     </div>
   );
 }
+
 
