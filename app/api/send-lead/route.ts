@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { NextResponse } from "next/server";
-import { decodePayload } from "@/lib/codec";
+import { decodePayload } from "../../../lib/codec";
+
 
 const resend = new Resend(process.env.RESEND_API_KEY || "");
 
