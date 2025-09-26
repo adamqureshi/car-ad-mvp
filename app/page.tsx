@@ -23,6 +23,10 @@ export default function Home() {
 
   return (
     <div className="card">
+      <div className="breadcrumbs">
+        <a className="link" href="/">Home</a>
+      </div>
+
       <div className="h1">Your dashboard</div>
 
       {!mobile ? (
@@ -38,7 +42,7 @@ export default function Home() {
           <p className="p">
             Signed in (local): <strong>{mobile}</strong>
           </p>
-          <a className="button-blue" href="/new">Create Ad</a>
+          <a className="link-big" href="/new">Create Ad</a>
           <div className="small" style={{ marginTop: 8 }}>
             One tap → fill the form → get a shareable link.
           </div>
@@ -55,16 +59,13 @@ export default function Home() {
           {ads.map((a, i) => (
             <div key={i} className="card" style={{ padding: 12 }}>
               <div className="p"><strong>{a.title}</strong></div>
-              <a className="link" href={a.url} target="_blank" rel="noreferrer">
-                {a.url}
-              </a>
+              <a className="link" href={a.url} target="_blank" rel="noreferrer">{a.url}</a>
               <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                <button className="button" onClick={() => copy(a.url)} type="button">
+                <a className="link" href="#" onClick={(e)=>{e.preventDefault(); copy(a.url);}}>
                   Copy link
-                </button>
-                <a className="button" href={a.url} target="_blank" rel="noreferrer">
-                  Open
                 </a>
+                <span className="bc-sep">·</span>
+                <a className="link" href={a.url} target="_blank" rel="noreferrer">Open</a>
               </div>
             </div>
           ))}
@@ -73,6 +74,7 @@ export default function Home() {
     </div>
   );
 }
+
 
 
 
