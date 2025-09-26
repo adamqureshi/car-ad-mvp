@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { encodePayload } from "@/lib/codec";
+import { encodePayload } from "../lib/codec";
+
 
 export default function Page() {
   const [creating, setCreating] = useState(false);
