@@ -1,20 +1,37 @@
 "use client";
 import { useEffect, useState } from "react";
 
+function onlyDigits(s: string) { return s.replace(/\D/g, ""); }
+function formatUSPhone(s: string) {
+  const d = onlyDigits(s).slice(0, 10);
+  if (d.length < 4) return d;
+  if (d.length < 7) return `(${d.slice(0,3)}) ${d.slice(3)}`;
+  return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
+}
+
 export default function AccountPage() {
   const [mobile, setMobile] = useState("");
 
   useEffect(() => {
     const m = localStorage.getItem("carad.mobile") || "";
-    setMobile(m);
+    setMobile(m ? formatUSPhone(m) : "");
   }, []);
+
+  function onInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const cursorEnd = e.target.selectionEnd || 0;
+    const before = e.target.value;
+    const formatted = formatUSPhone(before);
+    setMobile(formatted);
+    // keep cursor near end; simple & good enough
+    requestAnimationFrame(() => e.target.setSelectionRange(formatted.length, formatted.length));
+  }
 
   function save(e: React.FormEvent) {
     e.preventDefault();
-    const n = mobile.trim();
-    if (!n) { alert("Enter your mobile"); return; }
-    localStorage.setItem("carad.mobile", n);
-    alert("Saved! Tap the green pencil to create your ad.");
+    const raw = onlyDigits(mobile);
+    if (!raw) { alert("Enter your mobile"); return; }
+    localStorage.setItem("carad.mobile", raw); // store digits only
+    alert("Saved! Tap the green pencil or Create Ad to make an ad.");
     window.location.href = "/";
   }
 
@@ -26,9 +43,9 @@ export default function AccountPage() {
         <label className="small">Mobile number
           <input
             className="input"
-            placeholder="e.g., +1 555 123 4567"
+            placeholder="(917) 386-4337"
             value={mobile}
-            onChange={(e) => setMobile(e.target.value)}
+            onChange={onInput}
             inputMode="tel"
             autoComplete="tel"
             required
@@ -36,7 +53,7 @@ export default function AccountPage() {
         </label>
         <button className="button" type="submit">Save</button>
       </form>
-      <div className="small" style={{marginTop:8}}>After saving, hit the green pencil to create an ad.</div>
+      <div className="small" style={{marginTop:8}}>After saving, create your ad.</div>
     </div>
   );
 }
