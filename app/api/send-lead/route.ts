@@ -1,9 +1,6 @@
 import { Resend } from "resend";
 import { NextResponse } from "next/server";
-import { decodePayload } from "../../../lib/codec";
-
-
-const resend = new Resend(process.env.RESEND_API_KEY || "");
+import { decodePayload } from "@/lib/codec";
 
 export async function POST(req: Request) {
   try {
@@ -20,16 +17,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "No recipient" }, { status: 400 });
     }
 
-    const title = [payload.year, payload.make, payload.model, payload.trim].filter(Boolean).join(" ") || "Vehicle";
+    const title =
+      [payload.year, payload.make, payload.model, payload.trim].filter(Boolean).join(" ") || "Vehicle";
 
-    const text = `New lead on your car:\n\n` +
+    const text =
+      `New lead on your car:\n\n` +
       `Car: ${title}\nVIN: ${payload.vin}\nPrice: ${payload.price || "(n/a)"}\n\n` +
       `Buyer name: ${name || "(n/a)"}\nBuyer phone: ${phone || "(n/a)"}\nBuyer email: ${email || "(n/a)"}\n\n` +
       `Message:\n${message || "(none)"}\n\n` +
       `Contact buyer directly to respond.\n`;
 
+    // Lazily construct the client at runtime to avoid build-time failures
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      // Don’t hard-fail the build or the route; return a clear error to caller
+      return NextResponse.json(
+        { ok: false, error: "RESEND_API_KEY is not set on the server." },
+        { status: 500 }
+      );
+    }
+    const resend = new Resend(apiKey);
+
     await resend.emails.send({
-      from: "leads@car-ad-mvp.dev", // change to your verified Resend domain
+      from: "leads@car-ad-mvp.dev", // change to your verified domain
       to,
       subject: `Lead: ${title}`,
       text,
