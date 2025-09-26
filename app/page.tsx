@@ -1,110 +1,59 @@
 "use client";
-import { useMemo, useState } from "react";
-import { decodePayload } from "@/lib/codec";
+import { useEffect, useState } from "react";
 
-const fmt = new Intl.NumberFormat("en-US");
-const fmtMoney = (s?: string) => {
-  if (!s) return "";
-  const digits = s.replace(/[^\d]/g, "");
-  if (!digits) return "";
-  return "$" + fmt.format(Number(digits));
-};
-const fmtMiles = (s?: string) => {
-  if (!s) return "";
-  const digits = s.replace(/[^\d]/g, "");
-  if (!digits) return "";
-  return fmt.format(Number(digits)) + " miles";
-};
+type MyAd = { title: string; url: string; createdAt: number };
 
-export default function AdPage({ params }: { params: { payload: string } }) {
-  const data = useMemo(() => decodePayload(params.payload), [params.payload]);
-  const [showContact, setShowContact] = useState(false);
+export default function Home() {
+  const [mobile, setMobile] = useState<string | null>(null);
+  const [ads, setAds] = useState<MyAd[]>([]);
 
-  if (!data) {
-    return (
-      <div className="card">
-        <div className="h1">Not found</div>
-        <div className="p">This ad link looks invalid.</div>
-      </div>
-    );
+  useEffect(() => {
+    setMobile(localStorage.getItem("carad.mobile"));
+    try {
+      const raw = localStorage.getItem("carad.myads");
+      setAds(raw ? (JSON.parse(raw) as MyAd[]) : []);
+    } catch { setAds([]); }
+  }, []);
+
+  function copy(t: string) {
+    navigator.clipboard.writeText(t).then(() => alert("Link copied"));
   }
-
-  const title =
-    [data.year, data.make, data.model, data.trim].filter(Boolean).join(" ") || "Vehicle";
-  const where =
-    [data.city, data.state].filter(Boolean).join(", ") || (data.zip ? `ZIP ${data.zip}` : "");
-  const price = fmtMoney(data.price);
-  const miles = fmtMiles(data.miles);
 
   return (
     <div className="card">
-      {data.photoUrl && (
-        <div style={{ marginBottom: 12 }}>
-          <img
-            src={data.photoUrl}
-            alt={title}
-            style={{
-              width: "100%",
-              height: "auto",
-              borderRadius: 12,
-              border: "1px solid var(--border)",
-              display: "block",
-            }}
-          />
-        </div>
-      )}
+      <div className="h1">Your dashboard</div>
 
-      <div className="h1">{title}</div>
-      <div className="p small">VIN: {data.vin}</div>
-      {where && <div className="p small">Location: {where}</div>}
-      {miles && <div className="p small">Odometer: {miles}</div>}
-      {price && (
-        <div className="p">
-          Asking Price: <strong>{price}</strong>
-        </div>
-      )}
-      {data.notes && <div className="p">Notes: {data.notes}</div>}
-
-      <div className="hr" />
-
-      {!showContact ? (
-        <button className="button" type="button" onClick={() => setShowContact(true)}>
-          CONTACT SELLER
-        </button>
+      {!mobile ? (
+        <>
+          <p className="p">You don’t have an account yet.</p>
+          <a className="button" href="/account">Create account (mobile only)</a>
+        </>
       ) : (
-        <div>
-          <div className="h2">Seller Contact</div>
-          <div className="p"><strong>{data.sellerPhone}</strong></div>
-          <div className="actions" style={{ marginTop: 8 }}>
-            <a className="link" href={`sms:${encodeURIComponent(data.sellerPhone)}`}>
-              Text seller
-            </a>
-            <a className="link" href={`tel:${encodeURIComponent(data.sellerPhone)}`}>
-              Call seller
-            </a>
-            {data.sellerEmail && (
-              <a
-                className="link"
-                href={`mailto:${encodeURIComponent(
-                  data.sellerEmail
-                )}?subject=${encodeURIComponent("Interested in your car")}`}
-              >
-                Email seller
-              </a>
-            )}
-          </div>
-        </div>
+        <>
+          <p className="p">Signed in (local): <strong>{mobile}</strong></p>
+          <p className="p">Tap the big green pencil to create a new ad.</p>
+        </>
       )}
 
       <div className="hr" />
 
-      <div className="small">
-        Minimal ad page. Payments/inspection/title services can be added later.
-      </div>
-
-      <div className="p" style={{ marginTop: 8 }}>
-        <a className="link" href="/">Create your own car ad</a>
-      </div>
+      <div className="h2">My ads</div>
+      {ads.length === 0 ? (
+        <div className="small">No ads yet.</div>
+      ) : (
+        <div className="row">
+          {ads.map((a, i) => (
+            <div key={i} className="card" style={{padding:12}}>
+              <div className="p"><strong>{a.title}</strong></div>
+              <a className="link" href={a.url} target="_blank" rel="noreferrer">{a.url}</a>
+              <div style={{display:"flex", gap:8, marginTop:8}}>
+                <button className="button" onClick={() => copy(a.url)} type="button">Copy link</button>
+                <a className="button" href={a.url} target="_blank" rel="noreferrer">Open</a>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
