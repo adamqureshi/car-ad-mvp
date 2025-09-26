@@ -177,6 +177,28 @@ textarea { resize: vertical; min-height: 96px; }
   padding: 6px 0;
 }
 .link-action:focus-visible { box-shadow: 0 0 0 3px rgba(37,99,235,.24); outline: none; }
+/* ---- Form label upgrades ---- */
+label.small {
+  display: block;
+  font-size: 13.5px;          /* a touch larger than body */
+  font-weight: 700;           /* bold for readability */
+  color: var(--text);         /* no muted gray for labels */
+  line-height: 1.25;
+  letter-spacing: .005em;
+  margin: 6px 0 2px;          /* top/bottom spacing around label text */
+}
+
+/* space between label text and the control */
+label.small > .input,
+label.small > .select,
+label.small > textarea {
+  margin-top: 6px;
+}
+
+/* optional: tighten grid rows a hair now that labels are bolder */
+.row { gap: 12px; }
+.row2 { gap: 12px; }
+
 
 
 
