@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from "react";
 import { encodePayload } from "@/lib/codec";
 
-// Helpers
 const fmt = new Intl.NumberFormat("en-US");
 const onlyDigits = (s: string) => s.replace(/\D/g, "");
 const formatUSPhone = (s: string) => {
@@ -24,13 +23,12 @@ export default function NewAd() {
 
   useEffect(() => {
     const raw = localStorage.getItem("carad.mobile") || "";
-    setAccountMobile(raw); // raw digits; we format only for display
+    setAccountMobile(raw);
   }, []);
 
   const getInput = (name: string) =>
     formRef.current?.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null;
 
-  // VIN auto-decode
   function scheduleDecodeIfReady() {
     const vinEl = getInput("vin") as HTMLInputElement | null;
     if (!vinEl) return;
@@ -57,9 +55,7 @@ export default function NewAd() {
 
     setDecoding(true);
     try {
-      const res = await fetch(
-        `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${encodeURIComponent(vin)}?format=json`
-      );
+      const res = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${encodeURIComponent(vin)}?format=json`);
       const data = await res.json();
       const row = data?.Results?.[0] || {};
       setValue("year", String(row.ModelYear || ""));
@@ -73,16 +69,12 @@ export default function NewAd() {
     }
   }
 
-  // ZIP → City/State
   function scheduleZipLookup() {
     const zipEl = getInput("zip") as HTMLInputElement | null;
     if (!zipEl) return;
     const digits = onlyDigits(zipEl.value).slice(0, 5);
     if (zipEl.value !== digits) zipEl.value = digits;
-    if (digits.length !== 5) {
-      if (zipDebounce.current) clearTimeout(zipDebounce.current);
-      return;
-    }
+    if (digits.length !== 5) { if (zipDebounce.current) clearTimeout(zipDebounce.current); return; }
     if (zipDebounce.current) clearTimeout(zipDebounce.current);
     zipDebounce.current = setTimeout(() => lookupZipNow(digits), 300);
   }
@@ -98,12 +90,9 @@ export default function NewAd() {
         setValue("city", String(place["place name"] || ""));
         setValue("state", String(place["state abbreviation"] || ""));
       }
-    } finally {
-      setZipLoading(false);
-    }
+    } finally { setZipLoading(false); }
   }
 
-  // Price / Odometer formatting
   function formatNumberInput(name: "price" | "miles") {
     const el = getInput(name) as HTMLInputElement | null;
     if (!el) return;
@@ -116,7 +105,6 @@ export default function NewAd() {
     if (el) el.value = value || "";
   };
 
-  // Phone formatting
   function onPhoneInput(e: React.ChangeEvent<HTMLInputElement>) {
     e.target.value = formatUSPhone(e.target.value);
   }
@@ -124,6 +112,7 @@ export default function NewAd() {
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
+
     const sellerPhoneDigits = onlyDigits(String(form.get("sellerPhone") || ""));
 
     const payload = {
@@ -141,7 +130,7 @@ export default function NewAd() {
       state: String(form.get("state") || "").trim(),
       sellerName: String(form.get("sellerName") || "").trim(),
       sellerEmail: String(form.get("sellerEmail") || "").trim(),
-      sellerPhone: sellerPhoneDigits, // store digits only
+      sellerPhone: sellerPhoneDigits,
       notes: String(form.get("notes") || "").trim(),
     };
 
@@ -153,7 +142,6 @@ export default function NewAd() {
     const nextUrl = `${window.location.origin}/ad/${encoded}`;
     setUrl(nextUrl);
 
-    // Save to "My ads" (local)
     const title = [payload.year, payload.make, payload.model, payload.trim].filter(Boolean).join(" ") || "Vehicle";
     try {
       const raw = localStorage.getItem("carad.myads");
@@ -167,13 +155,17 @@ export default function NewAd() {
 
   return (
     <div className="card">
+      <div className="breadcrumbs">
+        <a className="link" href="/">Home</a>
+        <span className="bc-sep">›</span>
+        <span className="small">New Ad</span>
+      </div>
+
       <div className="h1">New Ad</div>
       <p className="p">Fill this out, get a link, share anywhere.</p>
 
       <form className="row" onSubmit={onSubmit} ref={formRef}>
-        {/* VIN: input then button UNDER it (full width) */}
-        <label className="small">
-          VIN
+        <label className="small">VIN
           <input
             className="input"
             name="vin"
@@ -184,148 +176,102 @@ export default function NewAd() {
             onBlur={decodeVinNow}
           />
         </label>
-        <button
-          type="button"
-          className="button"
-          onClick={decodeVinNow}
-          disabled={decoding}
-          style={{ width: "100%" }}
+        <a
+          className="link-action"
+          href="#"
+          onClick={(e)=>{ e.preventDefault(); if (!decoding) decodeVinNow(); }}
           aria-label="Decode VIN"
         >
           {decoding ? "Decoding…" : "Decode VIN"}
-        </button>
+        </a>
 
-        <label className="small">
-          Photo URL
+        <label className="small">Photo URL
           <input className="input" name="photoUrl" placeholder="https://…" />
         </label>
 
         <div className="row2">
-          <label className="small">
-            Asking price ($)
-            <input
-              className="input"
-              name="price"
-              placeholder="e.g., 31,500"
-              inputMode="numeric"
-              onInput={() => formatNumberInput("price")}
-            />
+          <label className="small">Asking price ($)
+            <input className="input" name="price" placeholder="e.g., 31,500" inputMode="numeric"
+                   onInput={() => formatNumberInput("price")} />
           </label>
-          <label className="small">
-            Odometer (miles)
-            <input
-              className="input"
-              name="miles"
-              placeholder="e.g., 42,300"
-              inputMode="numeric"
-              onInput={() => formatNumberInput("miles")}
-            />
+          <label className="small">Odometer (miles)
+            <input className="input" name="miles" placeholder="e.g., 42,300" inputMode="numeric"
+                   onInput={() => formatNumberInput("miles")} />
           </label>
         </div>
 
         <div className="row2">
-          <label className="small">
-            Year
+          <label className="small">Year
             <input className="input" name="year" placeholder="e.g., 2022" />
           </label>
-          <label className="small">
-            Make
+          <label className="small">Make
             <input className="input" name="make" placeholder="e.g., Tesla" />
           </label>
         </div>
 
         <div className="row2">
-          <label className="small">
-            Model
+          <label className="small">Model
             <input className="input" name="model" placeholder="e.g., Model Y" />
           </label>
-          <label className="small">
-            Trim
+          <label className="small">Trim
             <input className="input" name="trim" placeholder="e.g., Long Range" />
           </label>
         </div>
 
         <div className="row2">
-          <label className="small">
-            ZIP
-            <input
-              className="input"
-              name="zip"
-              placeholder="e.g., 11713"
-              inputMode="numeric"
-              maxLength={5}
-              onInput={scheduleZipLookup}
-              onBlur={scheduleZipLookup}
-            />
+          <label className="small">ZIP
+            <input className="input" name="zip" placeholder="e.g., 11713" inputMode="numeric" maxLength={5}
+                   onInput={scheduleZipLookup} onBlur={scheduleZipLookup} />
             {zipLoading && <div className="small">Looking up city/state…</div>}
           </label>
           <div className="row2">
-            <label className="small">
-              City
+            <label className="small">City
               <input className="input" name="city" placeholder="City" />
             </label>
-            <label className="small">
-              State
+            <label className="small">State
               <input className="input" name="state" placeholder="NY" />
             </label>
           </div>
         </div>
 
         <div className="row2">
-          <label className="small">
-            Seller name
+          <label className="small">Seller name
             <input className="input" name="sellerName" placeholder="Your name" />
           </label>
-          <label className="small">
-            Seller email
+          <label className="small">Seller email
             <input className="input" name="sellerEmail" placeholder="you@example.com" />
           </label>
         </div>
 
-        <label className="small">
-          Seller mobile (required)
-          <input
-            className="input"
-            name="sellerPhone"
-            placeholder="(917) 386-4337"
-            required
-            inputMode="tel"
-            autoComplete="tel"
-            defaultValue={formatUSPhone(accountMobile)}
-            onChange={onPhoneInput}
-          />
+        <label className="small">Seller mobile (required)
+          <input className="input" name="sellerPhone" placeholder="(917) 386-4337" required
+                 inputMode="tel" autoComplete="tel"
+                 defaultValue={formatUSPhone(accountMobile)} onChange={(e)=>{ e.target.value = formatUSPhone(e.target.value); }} />
         </label>
 
-        <label className="small">
-          Notes (optional)
+        <label className="small">Notes (optional)
           <textarea className="input" name="notes" placeholder="Any quick details buyers should know" rows={3} />
         </label>
 
-        <button className="button" type="submit" disabled={creating || decoding || zipLoading}>
-          {creating ? "Creating…" : "Create Link"}
-        </button>
+        <a
+          className="link-action"
+          href="#"
+          onClick={(e)=>{ e.preventDefault(); (formRef.current as HTMLFormElement)?.requestSubmit(); }}
+        >
+          Create Link
+        </a>
       </form>
 
       {url && (
         <div style={{ marginTop: 16 }}>
           <div className="h2">Your shareable link</div>
-          <a className="link" href={url} target="_blank" rel="noreferrer">
-            {url}
-          </a>
-          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-            <button
-              className="button"
-              type="button"
-              onClick={async () => {
-                await navigator.clipboard.writeText(url);
-                alert("Link copied");
-              }}
-            >
+          <a className="link" href={url} target="_blank" rel="noreferrer">{url}</a>
+          <div className="small" style={{ marginTop: 8 }}>
+            <a className="link" href="#" onClick={async (e)=>{e.preventDefault(); await navigator.clipboard.writeText(url); alert("Link copied");}}>
               Copy link
-            </button>
-            <a className="button" href="/">
-              Done
             </a>
+            <span className="bc-sep"> · </span>
+            <a className="link" href="/">Back to dashboard</a>
           </div>
         </div>
       )}
