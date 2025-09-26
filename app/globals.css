@@ -132,4 +132,20 @@ textarea { resize: vertical; min-height: 96px; }
 .button-blue:hover   { filter: brightness(0.96); }
 .button-blue:active  { transform: translateY(1px); }
 .button-blue:focus-visible { box-shadow: 0 0 0 3px rgba(37,99,235,.24); }
+/* Big blue underlined link (great for mobile tap targets) */
+.link-big {
+  display: inline-block;
+  color: var(--link);
+  text-decoration: underline;
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.3;
+  padding: 10px 2px;         /* bigger hit area */
+  border-radius: 6px;        /* helps focus ring */
+}
+.link-big:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.24);
+}
+
 
