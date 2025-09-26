@@ -1,14 +1,16 @@
 export type Payload = {
   vin: string;
-  price?: string;
+  price?: string;          // Asking price (digits/commas ok)
   titleStatus?: "paid" | "lien";
   year?: string;
   make?: string;
   model?: string;
   trim?: string;
-  miles?: string;
+  miles?: string;          // Odometer (digits/commas ok)
   city?: string;
   state?: string;
+  zip?: string;            // NEW
+  photoUrl?: string;       // NEW
   sellerName: string;
   sellerEmail: string;
   sellerPhone: string;
