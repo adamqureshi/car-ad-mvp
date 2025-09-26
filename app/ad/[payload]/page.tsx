@@ -26,8 +26,16 @@ export default function AdPage({ params }: { params: { payload: string } }) {
   if (!data) {
     return (
       <div className="card">
+        <div className="breadcrumbs">
+          <a className="link" href="/">Home</a>
+          <span className="bc-sep">›</span>
+          <span className="small">Ad</span>
+        </div>
         <div className="h1">Not found</div>
         <div className="p">This ad link looks invalid.</div>
+        <div className="small" style={{ marginTop: 8 }}>
+          <a className="link" href="/">Back to dashboard</a>
+        </div>
       </div>
     );
   }
@@ -41,34 +49,52 @@ export default function AdPage({ params }: { params: { payload: string } }) {
 
   return (
     <div className="card">
-      {/* photo, title, details ... (unchanged) */}
+      <div className="breadcrumbs">
+        <a className="link" href="/">Home</a>
+        <span className="bc-sep">›</span>
+        <span className="small">Ad</span>
+      </div>
+
+      {data.photoUrl && (
+        <img src={data.photoUrl} alt={title} style={{ width: "100%", borderRadius: 12, marginBottom: 12, objectFit: "cover" }} />
+      )}
+
+      <div className="h1">{title}</div>
+      <div className="p">
+        {price && <><strong>{price}</strong><span className="bc-sep"> · </span></>}
+        {miles && <>{miles}<span className="bc-sep"> · </span></>}
+        {where}
+      </div>
 
       <div className="hr" />
 
       {!showContact ? (
-        <button className="button" type="button" onClick={() => setShowContact(true)}>
+        <a className="link-action" href="#" onClick={(e)=>{ e.preventDefault(); setShowContact(true); }}>
           CONTACT SELLER
-        </button>
+        </a>
       ) : (
         <div>
           <div className="h2">Seller Contact</div>
           <div className="p"><strong>{phonePretty || data.sellerPhone}</strong></div>
-          <div className="actions" style={{ marginTop: 8 }}>
+          <div className="small" style={{ marginTop: 8 }}>
             <a className="link" href={`sms:${encodeURIComponent(phoneDigits)}`}>Text seller</a>
+            <span className="bc-sep"> · </span>
             <a className="link" href={`tel:${encodeURIComponent(phoneDigits)}`}>Call seller</a>
             {data.sellerEmail && (
-              <a className="link" href={`mailto:${encodeURIComponent(data.sellerEmail)}?subject=${encodeURIComponent("Interested in your car")}`}>
-                Email seller
-              </a>
+              <>
+                <span className="bc-sep"> · </span>
+                <a className="link" href={`mailto:${encodeURIComponent(data.sellerEmail)}?subject=${encodeURIComponent("Interested in your car")}`}>
+                  Email seller
+                </a>
+              </>
             )}
           </div>
         </div>
       )}
 
       <div className="hr" />
-      <div className="small">Minimal ad page. Payments/inspection/title services can be added later.</div>
-      <div className="p" style={{ marginTop: 8 }}>
-        <a className="link" href="/">Create your own car ad</a>
+      <div className="small">
+        <a className="link" href="/">Back to dashboard</a>
       </div>
     </div>
   );
