@@ -99,3 +99,19 @@ textarea { resize: vertical; min-height: 96px; }
 @media (prefers-reduced-motion: reduce) {
   .input, .select, .button, textarea { transition: none; }
 }
+.fab-green {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 9999px;
+  background: #16a34a; /* green-600 */
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 15px rgba(0,0,0,.10), 0 4px 6px rgba(0,0,0,.08);
+  border: none;
+  text-decoration: none;
+}
+.fab-green:hover { filter: brightness(0.95); }
+.fab-green:active { transform: translateY(1px); }
