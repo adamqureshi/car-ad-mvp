@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { decodePayload } from "@/lib/codec";
+import { decodePayload } from "../../../lib/codec";
+
 import { notFound } from "next/navigation";
 import LeadForm from "./LeadForm";
 
