@@ -18,11 +18,8 @@ export default function AccountPage() {
   }, []);
 
   function onInput(e: React.ChangeEvent<HTMLInputElement>) {
-    const cursorEnd = e.target.selectionEnd || 0;
-    const before = e.target.value;
-    const formatted = formatUSPhone(before);
+    const formatted = formatUSPhone(e.target.value);
     setMobile(formatted);
-    // keep cursor near end; simple & good enough
     requestAnimationFrame(() => e.target.setSelectionRange(formatted.length, formatted.length));
   }
 
@@ -30,15 +27,22 @@ export default function AccountPage() {
     e.preventDefault();
     const raw = onlyDigits(mobile);
     if (!raw) { alert("Enter your mobile"); return; }
-    localStorage.setItem("carad.mobile", raw); // store digits only
-    alert("Saved! Tap the green pencil or Create Ad to make an ad.");
+    localStorage.setItem("carad.mobile", raw);
+    alert("Saved!");
     window.location.href = "/";
   }
 
   return (
     <div className="card">
+      <div className="breadcrumbs">
+        <a className="link" href="/">Home</a>
+        <span className="bc-sep">›</span>
+        <span className="small">Account</span>
+      </div>
+
       <div className="h1">Create account</div>
       <p className="p">Just your mobile for now. We’ll add verification later.</p>
+
       <form className="row" onSubmit={save}>
         <label className="small">Mobile number
           <input
@@ -51,9 +55,12 @@ export default function AccountPage() {
             required
           />
         </label>
-        <button className="button" type="submit">Save</button>
+
+        <a className="link-action" href="#" onClick={(e)=>{e.preventDefault(); (document.querySelector('form') as HTMLFormElement)?.requestSubmit();}}>
+          Save
+        </a>
       </form>
-      <div className="small" style={{marginTop:8}}>After saving, create your ad.</div>
     </div>
   );
 }
+
