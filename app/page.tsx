@@ -26,22 +26,23 @@ export default function Home() {
       <div className="h1">Your dashboard</div>
 
       {!mobile ? (
-        <>
-          <p className="p">You don’t have an account yet.</p>
-          <a className="button" href="/account">Create account (mobile only)</a>
-          <div className="small" style={{ marginTop: 8 }}>
-            After saving your mobile, you’ll see a big blue “Create Ad” button here.
-          </div>
-        </>
-      ) : (
-        <>
-          <p className="p">Signed in (local): <strong>{mobile}</strong></p>
-          <a className="button-blue" href="/new">Create Ad</a>
-          <div className="small" style={{ marginTop: 8 }}>
-            One tap → fill the form → get a shareable link.
-          </div>
-        </>
-      )}
+  <>
+    <p className="p">You don’t have an account yet.</p>
+    <a className="link-big" href="/account">Create account (mobile only)</a>
+    <div className="small" style={{ marginTop: 8 }}>
+      Saves just your mobile for now; verification later.
+    </div>
+  </>
+) : (
+  <>
+    <p className="p">Signed in (local): <strong>{mobile}</strong></p>
+    <a className="button-blue" href="/new">Create Ad</a>
+    <div className="small" style={{ marginTop: 8 }}>
+      One tap → fill the form → get a shareable link.
+    </div>
+  </>
+)}
+
 
       <div className="hr" />
 
