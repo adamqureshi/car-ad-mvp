@@ -12,7 +12,9 @@ export default function Home() {
     try {
       const raw = localStorage.getItem("carad.myads");
       setAds(raw ? (JSON.parse(raw) as MyAd[]) : []);
-    } catch { setAds([]); }
+    } catch {
+      setAds([]);
+    }
   }, []);
 
   function copy(t: string) {
@@ -27,11 +29,17 @@ export default function Home() {
         <>
           <p className="p">You don’t have an account yet.</p>
           <a className="button" href="/account">Create account (mobile only)</a>
+          <div className="small" style={{ marginTop: 8 }}>
+            After saving your mobile, you’ll see a big blue “Create Ad” button here.
+          </div>
         </>
       ) : (
         <>
           <p className="p">Signed in (local): <strong>{mobile}</strong></p>
-          <p className="p">Tap the big green pencil to create a new ad.</p>
+          <a className="button-blue" href="/new">Create Ad</a>
+          <div className="small" style={{ marginTop: 8 }}>
+            One tap → fill the form → get a shareable link.
+          </div>
         </>
       )}
 
@@ -43,20 +51,12 @@ export default function Home() {
       ) : (
         <div className="row">
           {ads.map((a, i) => (
-            <div key={i} className="card" style={{padding:12}}>
+            <div key={i} className="card" style={{ padding: 12 }}>
               <div className="p"><strong>{a.title}</strong></div>
               <a className="link" href={a.url} target="_blank" rel="noreferrer">{a.url}</a>
-              <div style={{display:"flex", gap:8, marginTop:8}}>
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                 <button className="button" onClick={() => copy(a.url)} type="button">Copy link</button>
-                <a className="button" href={a.url} target="_blank" rel="noreferrer">Open</a>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+                <a className="button" hre
 
 
 
