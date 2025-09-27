@@ -1,66 +1,95 @@
 "use client";
-import { useEffect, useState } from "react";
 
-function onlyDigits(s: string) { return s.replace(/\D/g, ""); }
-function formatUSPhone(s: string) {
-  const d = onlyDigits(s).slice(0, 10);
-  if (d.length < 4) return d;
-  if (d.length < 7) return `(${d.slice(0,3)}) ${d.slice(3)}`;
-  return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
-}
+import { useState } from "react";
 
 export default function AccountPage() {
-  const [mobile, setMobile] = useState("");
+  const [phone, setPhone] = useState("");
+  const [code, setCode] = useState("");
+  const [step, setStep] = useState<"enter" | "code">("enter");
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    const m = localStorage.getItem("carad.mobile") || "";
-    setMobile(m ? formatUSPhone(m) : "");
-  }, []);
-
-  function onInput(e: React.ChangeEvent<HTMLInputElement>) {
-    const formatted = formatUSPhone(e.target.value);
-    setMobile(formatted);
-    requestAnimationFrame(() => e.target.setSelectionRange(formatted.length, formatted.length));
+  async function start() {
+    setMsg(null);
+    setLoading(true);
+    try {
+      const r = await fetch("/api/auth/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+      const data = await r.json();
+      if (!r.ok || !data.ok) throw new Error(data.error || "Failed to start");
+      setStep("code");
+      setMsg("Code sent via SMS.");
+    } catch (e: any) {
+      setMsg(e.message || "Error starting verification");
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function save(e: React.FormEvent) {
-    e.preventDefault();
-    const raw = onlyDigits(mobile);
-    if (!raw) { alert("Enter your mobile"); return; }
-    localStorage.setItem("carad.mobile", raw);
-    alert("Saved!");
-    window.location.href = "/";
+  async function check() {
+    setMsg(null);
+    setLoading(true);
+    try {
+      const r = await fetch("/api/auth/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, code }),
+      });
+      const data = await r.json();
+      if (!r.ok || !data.ok) throw new Error(data.error || "Invalid code");
+      setMsg("You're signed in!");
+      // redirect to dashboard or new-ad
+      window.location.href = "/";
+    } catch (e: any) {
+      setMsg(e.message || "Error verifying code");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="card">
-      <div className="breadcrumbs">
-        <a className="link" href="/">Home</a>
-        <span className="bc-sep">›</span>
-        <span className="small">Account</span>
-      </div>
-
       <div className="h1">Create account</div>
       <p className="p">Just your mobile for now. We’ll add verification later.</p>
 
-      <form className="row" onSubmit={save}>
-        <label className="small">Mobile number
+      {step === "enter" && (
+        <div className="row" style={{ marginTop: 12 }}>
           <input
             className="input"
-            placeholder="(917) 386-4337"
-            value={mobile}
-            onChange={onInput}
+            placeholder="+15551234567"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value.replace(/\s/g, ""))}
             inputMode="tel"
             autoComplete="tel"
-            required
           />
-        </label>
+          <button className="button" type="button" onClick={start} disabled={loading}>
+            {loading ? "Sending…" : "Send code"}
+          </button>
+        </div>
+      )}
 
-        <a className="link-action" href="#" onClick={(e)=>{e.preventDefault(); (document.querySelector('form') as HTMLFormElement)?.requestSubmit();}}>
-          Save
-        </a>
-      </form>
+      {step === "code" && (
+        <div className="row" style={{ marginTop: 12 }}>
+          <input
+            className="input"
+            placeholder="6-digit code"
+            value={code}
+            onChange={(e) => setCode(e.target.value.trim())}
+            inputMode="numeric"
+          />
+          <button className="button" type="button" onClick={check} disabled={loading}>
+            {loading ? "Verifying…" : "Verify & sign in"}
+          </button>
+          <a className="link" style={{ marginTop: 8 }} onClick={() => setStep("enter")}>
+            Use a different number
+          </a>
+        </div>
+      )}
+
+      {msg && <div className="small" style={{ marginTop: 12 }}>{msg}</div>}
     </div>
   );
 }
-
