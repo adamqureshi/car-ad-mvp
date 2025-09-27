@@ -18,6 +18,8 @@
     "typescript": "^5.4.0",
     "@types/react": "^18.3.3",
     "@types/node": "^20.11.25"
+    "nanoid": "^5.0.7"
+
   },
   "type": "module"
 }
