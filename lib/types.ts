@@ -1,9 +1,9 @@
 export type Ad = {
-  id: string;              // short id for the public URL
+  id: string;
   createdAt: string;
 
   vin: string;
-  photos: string[];        // blob URLs of uploaded photos
+  photos: string[];
   price: number;
   miles: number;
   year: number;
@@ -13,6 +13,13 @@ export type Ad = {
   exterior?: string;
   interior?: string;
   description?: string;
+
+  // optional extras used by your demo data/UI
+  title?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  titleStatus?: string;
 
   seller: {
     name: string;
