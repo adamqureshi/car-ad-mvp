@@ -11,11 +11,9 @@ function formatUSPhone(s: string) {
 }
 function toE164FromUS(formatted: string) {
   const d = onlyDigits(formatted);
-  // Very simple US-only rule: 10 digits -> +1XXXXXXXXXX
   if (d.length === 10) return `+1${d}`;
-  // If user already typed with country code
   if (formatted.trim().startsWith("+")) return formatted.trim();
-  return ""; // invalid
+  return "";
 }
 
 export default function AccountPage() {
@@ -55,7 +53,6 @@ export default function AccountPage() {
       const data = await r.json();
       if (!r.ok || !data.ok) throw new Error(data.error || "Failed to send code");
 
-      // remember raw digits locally for convenience
       localStorage.setItem("carad.mobile", onlyDigits(mobile));
       setStep("code");
       setMsg("Code sent via SMS.");
@@ -85,7 +82,6 @@ export default function AccountPage() {
       if (!r.ok || !data.ok) throw new Error(data.error || "Invalid code");
 
       setMsg("You're signed in!");
-      // Go wherever makes sense (dashboard or /new)
       window.location.href = "/";
     } catch (err: any) {
       setMsg(err?.message || "Verification failed");
@@ -157,4 +153,5 @@ export default function AccountPage() {
     </div>
   );
 }
+
 
