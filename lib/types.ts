@@ -3,7 +3,7 @@ export type Ad = {
   createdAt: string;
 
   vin: string;
-  photos: string[];
+  photos: string[];          // primary gallery we use everywhere
   price: number;
   miles: number;
   year: number;
@@ -14,12 +14,13 @@ export type Ad = {
   interior?: string;
   description?: string;
 
-  // optional extras used by your demo data/UI
+  // optional extras (to satisfy demo seed / UI)
   title?: string;
   city?: string;
   state?: string;
   zip?: string;
   titleStatus?: string;
+  images?: string[];         // alias used by demo seed; safe to keep optional
 
   seller: {
     name: string;
@@ -27,3 +28,4 @@ export type Ad = {
     phone?: string;
   };
 };
+
