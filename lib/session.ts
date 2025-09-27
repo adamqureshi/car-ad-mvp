@@ -1,9 +1,11 @@
 // lib/session.ts
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 import crypto from "crypto";
 
-const COOKIE_NAME = "carad.sid";
+export const COOKIE_NAME = "carad.sid";
 const SECRET = process.env.SESSION_SECRET || "dev-secret-change-me";
+const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
 // naive JWT-ish token (header.payload.signature) w/ HMAC-SHA256
 function sign(data: string) {
@@ -23,12 +25,16 @@ export function verifySessionToken(token: string | undefined) {
   if (parts.length !== 3) return null;
   const [h, b, s] = parts;
   const expected = sign(`${h}.${b}`);
+  // timingSafeEqual throws if lengths differ
+  if (s.length !== expected.length) return null;
   if (!crypto.timingSafeEqual(Buffer.from(s), Buffer.from(expected))) return null;
   try {
     const obj = JSON.parse(Buffer.from(b, "base64url").toString());
     if (obj.exp && Date.now() > obj.exp) return null;
     return obj;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 // server-side: read cookie + verify
@@ -39,11 +45,10 @@ export function getUserFromRequest() {
   return data as { phone: string; iat: number; exp?: number };
 }
 
-// set / clear cookie
+// set / clear cookie (server actions / route handlers without a response)
 export function setSessionCookie(payload: { phone: string }) {
   const now = Date.now();
-  const thirtyDays = 1000 * 60 * 60 * 24 * 30;
-  const token = createSessionToken({ ...payload, iat: now, exp: now + thirtyDays });
+  const token = createSessionToken({ ...payload, iat: now, exp: now + MAX_AGE * 1000 });
   cookies().set({
     name: COOKIE_NAME,
     value: token,
@@ -51,7 +56,7 @@ export function setSessionCookie(payload: { phone: string }) {
     sameSite: "lax",
     secure: true,
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: MAX_AGE,
   });
 }
 
@@ -66,37 +71,32 @@ export function clearSessionCookie() {
     maxAge: 0,
   });
 }
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
 
-// keep these aligned with what you already have at the top:
-const COOKIE_NAME = "carad.sid";
-const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
-
+// helper for APIs that already have a NextResponse
 export function setSession(res: NextResponse, payload: { phone: string }) {
-  const token = createSessionToken(payload);
-  res.cookies.set(COOKIE_NAME, token, {
+  const now = Date.now();
+  const token = createSessionToken({ ...payload, iat: now, exp: now + MAX_AGE * 1000 });
+  res.cookies.set({
+    name: COOKIE_NAME,
+    value: token,
     httpOnly: true,
-    secure: true,
     sameSite: "lax",
+    secure: true,
+    path: "/",
     maxAge: MAX_AGE,
-    path: "/",
   });
+  return res;
 }
 
-export function clearSession(res: NextResponse) {
-  res.cookies.set(COOKIE_NAME, "", {
+export function clearSessionOnResponse(res: NextResponse) {
+  res.cookies.set({
+    name: COOKIE_NAME,
+    value: "",
     httpOnly: true,
-    secure: true,
     sameSite: "lax",
-    maxAge: 0,
+    secure: true,
     path: "/",
+    maxAge: 0,
   });
-}
-
-export function getSession():
-  | { phone: string }
-  | null {
-  const token = cookies().get(COOKIE_NAME)?.value;
-  return verifySessionToken(token);
+  return res;
 }
