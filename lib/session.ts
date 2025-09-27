@@ -66,3 +66,37 @@ export function clearSessionCookie() {
     maxAge: 0,
   });
 }
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+
+// keep these aligned with what you already have at the top:
+const COOKIE_NAME = "carad.sid";
+const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+
+export function setSession(res: NextResponse, payload: { phone: string }) {
+  const token = createSessionToken(payload);
+  res.cookies.set(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    maxAge: MAX_AGE,
+    path: "/",
+  });
+}
+
+export function clearSession(res: NextResponse) {
+  res.cookies.set(COOKIE_NAME, "", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    maxAge: 0,
+    path: "/",
+  });
+}
+
+export function getSession():
+  | { phone: string }
+  | null {
+  const token = cookies().get(COOKIE_NAME)?.value;
+  return verifySessionToken(token);
+}
